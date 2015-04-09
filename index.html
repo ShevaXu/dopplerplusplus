@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Doppler Test</title>
+	<style type="text/css">
+		canvas {
+		  box-shadow: 0px 1px 6px -1px rgba(68,68,68,1);
+		}
+	</style>
+</head>
+<body>
+	<div>
+    <canvas id="spectrum" width="700" height="100"></canvas>
+    <canvas id="spectrum-zoom" width="700" height="100"></canvas>
+  </div>
+	<script src="doppler.js"></script>
+	<script type="text/javascript">
+		var spectrumCanvas = document.getElementById('spectrum').getContext('2d');
+		var zoomedSpectrumCanvas = document.getElementById('spectrum-zoom').getContext('2d');
+
+		var drawFrequencies = function(ctx, freqs, primaryTone, startFreq, endFreq) {
+		  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		  ctx.fillStyle = "rgb(0,0,0)";
+
+		  var primaryVolume = freqs[primaryTone];
+		  // For some reason, primaryVolume becomes 0 on firefox, I have no idea why
+		  if (primaryVolume == 0) {
+		    primaryVolume = 255;
+		  }
+		  for (var i = 0; i < (endFreq-startFreq); i++) {
+		    var volume = freqs[startFreq+i];
+		    var normalizedX = Math.floor( i/(endFreq-startFreq) * ctx.canvas.width );
+		    var normalizedY = Math.floor( 0.9 * volume/primaryVolume * ctx.canvas.height );
+		    ctx.fillRect( normalizedX, ctx.canvas.height - normalizedY - 5, 5, 5 );
+		  }
+		};
+
+		// userCallback(band, audioData, primaryTone, from, to, range);
+		doppler.init(function(bandwidth, audioData, primaryTone, from, to, range) {
+		  drawFrequencies(spectrumCanvas, audioData, primaryTone, 0, range);
+		  drawFrequencies(zoomedSpectrumCanvas, audioData, primaryTone, from, to);
+		});
+	</script>
+</body>
+</html>
