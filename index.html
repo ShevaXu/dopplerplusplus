@@ -10,7 +10,7 @@
 </head>
 <body>
 	<div>
-    <canvas id="spectrum" width="700" height="100"></canvas>
+    <canvas id="spectrum" width="2048" height="100"></canvas>
     <canvas id="spectrum-zoom" width="700" height="100"></canvas>
   </div>
 	<script src="doppler.js"></script>
@@ -18,7 +18,7 @@
 		var spectrumCanvas = document.getElementById('spectrum').getContext('2d');
 		var zoomedSpectrumCanvas = document.getElementById('spectrum-zoom').getContext('2d');
 
-		var drawFrequencies = function(ctx, freqs, primaryTone, startFreq, endFreq, bandwidth) {
+		var drawFrequencies = function(ctx, scale, freqs, primaryTone, startFreq, endFreq, bandwidth) {
 			var w = ctx.canvas.width;
 			var h = ctx.canvas.height;
 		  ctx.clearRect(0, 0, w, h);
@@ -33,27 +33,27 @@
 		  var drawBin = function(i, offset, height) {
 		  	var x = Math.floor( i / (endFreq - startFreq) * w );
 		    var y = Math.floor( (1 - 0.9 * freqs[startFreq + i] / primaryVolume) * h );
-		    ctx.fillRect( x, y + offset, 5, height );
+		    ctx.fillRect( x, y + offset, scale, height );
 		  }
 
 		  for (var i = 0; i < (endFreq-startFreq); i++) {
-		    drawBin(i, -5, 5);
+		    drawBin(i, -scale, scale);
 		  }
 
 		  if (typeof bandwidth != "undefined") {
 		  	ctx.fillStyle = "red";
-				drawBin(primaryTone - startFreq, 5, h);	// set height to h is fine, just cheating
+				drawBin(primaryTone - startFreq, scale, h);	// set height to h is fine, just cheating
 
 		  	ctx.fillStyle = "blue";
-		  	drawBin(primaryTone - bandwidth.left + 1 - startFreq, 5, h);
-		  	drawBin(primaryTone + bandwidth.right - 1 - startFreq, 5, h);
+		  	drawBin(primaryTone - bandwidth.left + 1 - startFreq, scale, h);
+		  	drawBin(primaryTone + bandwidth.right - 1 - startFreq, scale, h);
 		  };
 		};
 
-		// userCallback(band, audioData, primaryTone, from, to, range);
-		doppler.init(function(bandwidth, audioData, primaryTone, from, to, range) {
-		  drawFrequencies(spectrumCanvas, audioData, primaryTone, 0, range);
-		  drawFrequencies(zoomedSpectrumCanvas, audioData, primaryTone, from, to, bandwidth);
+		// userCallback(band, audioData, primaryTone, from, to);
+		doppler.init(function(bandwidth, audioData, primaryTone, from, to) {
+		  drawFrequencies(spectrumCanvas, 2, audioData, primaryTone, 0, 1024);
+		  drawFrequencies(zoomedSpectrumCanvas, 5, audioData, primaryTone, from, to, bandwidth);
 		});
 	</script>
 </body>

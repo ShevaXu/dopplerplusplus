@@ -85,7 +85,7 @@ window.doppler = (function() {
     var to   = primaryTone + relevantFreqWindow;
 
     var band = getBandwidth(analyser, audioData);
-    userCallback(band, audioData, primaryTone, from, to, freqToIndex(analyser, 22000));
+    userCallback(band, audioData, primaryTone, from, to);
 
     readMicInterval = setTimeout(readMic, 1, analyser, userCallback);
   };
