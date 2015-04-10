@@ -9,6 +9,8 @@
 	</style>
 </head>
 <body>
+	<button id="start-test">Start</button>
+	<button id="stop-test">Stop</button>
 	<div>
     <canvas id="spectrum" width="2048" height="100"></canvas>
     <canvas id="spectrum-zoom" width="700" height="100"></canvas>
@@ -50,11 +52,18 @@
 		  };
 		};
 
-		// userCallback(band, audioData, primaryTone, from, to);
-		doppler.init(function(bandwidth, audioData, primaryTone, from, to) {
-		  drawFrequencies(spectrumCanvas, 2, audioData, primaryTone, 0, 1024);
-		  drawFrequencies(zoomedSpectrumCanvas, 5, audioData, primaryTone, from, to, bandwidth);
-		});
+		document.getElementById("start-test").onclick = function() {
+			// userCallback(band, audioData, primaryTone, from, to);
+			doppler.init(function(bandwidth, audioData, primaryTone, from, to) {
+			  drawFrequencies(spectrumCanvas, 2, audioData, primaryTone, 0, 1024);
+			  drawFrequencies(zoomedSpectrumCanvas, 5, audioData, primaryTone, from, to, bandwidth);
+			});	
+		}
+
+		document.getElementById("stop-test").onclick = function() {
+			doppler.stop();
+		}
+		
 	</script>
 </body>
 </html>

@@ -6,7 +6,7 @@ window.doppler = (function() {
                    window.msAudioContext);
 
   var ctx = new AuContext();
-  var osc = ctx.createOscillator();
+  var osc;  // create later, to allow re-start
   // This is just preliminary, we'll actually do a quick scan
   // (as suggested in the paper) to optimize this.
   var freq = 20000;
@@ -101,6 +101,7 @@ window.doppler = (function() {
     mic.connect(analyser);
 
     // Doppler tone
+    osc = ctx.createOscillator();
     osc.frequency.value = freq;
     osc.type = osc.SINE;
     osc.start(0);
@@ -128,6 +129,7 @@ window.doppler = (function() {
     },
     stop: function () {
       clearInterval(readMicInterval);
+      osc.stop(0);
     }
   }
 })(window, document);
