@@ -4,9 +4,14 @@ window.doppler = (function() {
                    window.mozAudioContext ||
                    window.oAudioContext ||
                    window.msAudioContext);
+  // create later, to allow re-start
+  var ctx;
+  var osc;
+  var gainNode;
 
-  var ctx = new AuContext();
-  var osc;  // create later, to allow re-start
+  // really need to cache the stream???
+  var streamRef;
+
   // This is just preliminary, we'll actually do a quick scan
   // (as suggested in the paper) to optimize this.
   var freq = 20000;
@@ -76,6 +81,8 @@ window.doppler = (function() {
   };
 
   var readMicInterval = 0;
+  var switchGainInterval = 0;
+
   var readMic = function(analyser, userCallback) {
     var audioData = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(audioData);
@@ -90,7 +97,13 @@ window.doppler = (function() {
     readMicInterval = setTimeout(readMic, 1, analyser, userCallback);
   };
 
+  var switchGain = function(delay) {
+    gainNode.gain.value = gainNode.gain.value? 0: 1;
+    switchGainInterval = setTimeout(switchGain, delay, delay);
+  }
+
   var handleMic = function(stream, callback, userCallback) {
+    ctx = new AudioContext();
     // Mic
     var mic = ctx.createMediaStreamSource(stream);
     var analyser = ctx.createAnalyser();
@@ -105,7 +118,10 @@ window.doppler = (function() {
     osc.frequency.value = freq;
     osc.type = osc.SINE;
     osc.start(0);
-    osc.connect(ctx.destination);
+
+    gainNode = ctx.createGain();
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
 
     // There seems to be some initial "warm-up" period
     // where all frequencies are significantly louder.
@@ -116,6 +132,9 @@ window.doppler = (function() {
       osc.frequency.value = freq;
 
       clearInterval(readMicInterval);
+      clearInterval(switchOscInterval);
+
+      switchGain(100);
       callback(analyser, userCallback);
     });
   };
@@ -124,12 +143,20 @@ window.doppler = (function() {
     init: function(callback) {
       navigator.getUserMedia_ = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
       navigator.getUserMedia_({ audio: { optional: [{ echoCancellation: false }] } }, function(stream) {
+        streamRef = stream;
         handleMic(stream, readMic, callback);
       }, function() { console.log('Error!') });
     },
     stop: function () {
       clearInterval(readMicInterval);
+      clearInterval(switchGainInterval);
       osc.stop(0);
+    },
+    restart: function(callback) {
+      handleMic(streamRef, readMic, callback);
+    },
+    initialized: function () {
+      return streamRef || false;
     }
   }
 })(window, document);

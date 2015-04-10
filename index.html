@@ -52,12 +52,18 @@
 		  };
 		};
 
+		var userCallback = function(bandwidth, audioData, primaryTone, from, to) {
+		  drawFrequencies(spectrumCanvas, 2, audioData, primaryTone, 0, 1024);
+		  drawFrequencies(zoomedSpectrumCanvas, 5, audioData, primaryTone, from, to, bandwidth);
+		}
+
 		document.getElementById("start-test").onclick = function() {
-			// userCallback(band, audioData, primaryTone, from, to);
-			doppler.init(function(bandwidth, audioData, primaryTone, from, to) {
-			  drawFrequencies(spectrumCanvas, 2, audioData, primaryTone, 0, 1024);
-			  drawFrequencies(zoomedSpectrumCanvas, 5, audioData, primaryTone, from, to, bandwidth);
-			});	
+			// console.log(doppler.initialized());
+			if (doppler.initialized()) {
+				doppler.restart(userCallback);
+			}
+			else
+				doppler.init(userCallback);	
 		}
 
 		document.getElementById("stop-test").onclick = function() {
