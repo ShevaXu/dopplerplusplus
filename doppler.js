@@ -23,7 +23,9 @@ window.doppler = (function() {
     var primaryTone = freqToIndex(analyser, freq);
     var primaryVolume = freqs[primaryTone];
     // This ratio is totally empirical (aka trial-and-error).
-    var maxVolumeRatio = 0.001;
+    var maxVolumeRatio = 0.1;
+    var doSecondScan = true;
+    var band = {};
 
     var leftBandwidth = 0;
     do {
@@ -31,6 +33,36 @@ window.doppler = (function() {
       var volume = freqs[primaryTone-leftBandwidth];
       var normalizedVolume = volume / primaryVolume;
     } while (normalizedVolume > maxVolumeRatio && leftBandwidth < relevantFreqWindow);
+    band.left = leftBandwidth;
+
+    if (doSecondScan) {
+      var secondScanRatio = 0.3;
+      var secondBW = leftBandwidth;
+      var tmpMaxVolume = 0;
+      var secondPeak = -1;
+      // find if there's a peak over that ratio
+      do {
+        secondBW++;
+        var volume = freqs[primaryTone-secondBW];
+        var normalizedVolume = volume / primaryVolume;
+        if (normalizedVolume > tmpMaxVolume) {
+          tmpMaxVolume = normalizedVolume;
+          secondPeak = secondBW;
+        }
+      } while (secondBW < relevantFreqWindow);
+      if (tmpMaxVolume > secondScanRatio) {
+        // console.log("Find second peak!");
+        // repeat the first scan process
+        var secondVolume = tmpMaxVolume * primaryVolume;
+        secondBW = secondPeak;
+        do {
+          secondBW++;
+          var volume = freqs[primaryTone-secondBW];
+          var normalizedVolume = volume / secondVolume;
+        } while (normalizedVolume > maxVolumeRatio && secondBW < relevantFreqWindow);
+        band.secondLeft = secondBW;     
+      };
+    };
 
     var rightBandwidth = 0;
     do {
@@ -38,8 +70,38 @@ window.doppler = (function() {
       var volume = freqs[primaryTone+rightBandwidth];
       var normalizedVolume = volume / primaryVolume;
     } while (normalizedVolume > maxVolumeRatio && rightBandwidth < relevantFreqWindow);
+    band.right = rightBandwidth;
 
-    return { left: leftBandwidth, right: rightBandwidth };
+    if (doSecondScan) {
+      var secondScanRatio = 0.3;
+      var secondBW = rightBandwidth;
+      var tmpMaxVolume = 0;
+      var secondPeak = -1;
+      // find if there's a peak over that ratio
+      do {
+        secondBW++;
+        var volume = freqs[primaryTone-secondBW];
+        var normalizedVolume = volume / primaryVolume;
+        if (normalizedVolume > tmpMaxVolume) {
+          tmpMaxVolume = normalizedVolume;
+          secondPeak = secondBW;
+        }
+      } while (secondBW < relevantFreqWindow);
+      if (tmpMaxVolume > secondScanRatio) {
+        // console.log("Find second peak!");
+        // repeat the first scan process
+        var secondVolume = tmpMaxVolume * primaryVolume;
+        secondBW = secondPeak;
+        do {
+          secondBW++;
+          var volume = freqs[primaryTone-secondBW];
+          var normalizedVolume = volume / secondVolume;
+        } while (normalizedVolume > maxVolumeRatio && secondBW < relevantFreqWindow);
+        band.secondRight = secondBW;   
+      };
+    };
+
+    return band;
   };
 
   var freqToIndex = function(analyser, freq) {
@@ -132,7 +194,7 @@ window.doppler = (function() {
       osc.frequency.value = freq;
 
       clearInterval(readMicInterval);
-      clearInterval(switchOscInterval);
+      clearInterval(switchGainInterval);
 
       switchGain(100);
       callback(analyser, userCallback);

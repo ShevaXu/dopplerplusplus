@@ -20,11 +20,14 @@
 		var spectrumCanvas = document.getElementById('spectrum').getContext('2d');
 		var zoomedSpectrumCanvas = document.getElementById('spectrum-zoom').getContext('2d');
 
+		var maxLeft = 0;
+		var maxRight = 0;
+
 		var drawFrequencies = function(ctx, scale, freqs, primaryTone, startFreq, endFreq, bandwidth) {
 			var w = ctx.canvas.width;
 			var h = ctx.canvas.height;
 		  ctx.clearRect(0, 0, w, h);
-		  ctx.fillStyle = "black";
+		  
 
 		  var primaryVolume = freqs[primaryTone];
 		  // For some reason, primaryVolume becomes 0 on firefox, I have no idea why
@@ -38,6 +41,12 @@
 		    ctx.fillRect( x, y + offset, scale, height );
 		  }
 
+		  // for reference
+		  ctx.fillStyle = "yellow";
+		  if (maxLeft) drawBin(primaryTone - maxLeft - startFreq, -5 * scale, h);
+		  if (maxRight) drawBin(primaryTone + maxRight - startFreq, -5 * scale, h);
+
+		  ctx.fillStyle = "black";
 		  for (var i = 0; i < (endFreq-startFreq); i++) {
 		    drawBin(i, -scale, scale);
 		  }
@@ -49,6 +58,16 @@
 		  	ctx.fillStyle = "blue";
 		  	drawBin(primaryTone - bandwidth.left + 1 - startFreq, scale, h);
 		  	drawBin(primaryTone + bandwidth.right - 1 - startFreq, scale, h);
+
+		  	ctx.fillStyle = "green";
+		  	if (bandwidth.secondLeft != "undefined") {
+		  		drawBin(primaryTone - bandwidth.secondLeft + 1 - startFreq, scale, h);
+		  		if (bandwidth.secondLeft > maxLeft) maxLeft = bandwidth.secondLeft;
+		  	}
+		  	if (bandwidth.secondRight != "undefined") {
+			  	drawBin(primaryTone + bandwidth.secondRight - 1 - startFreq, scale, h);
+			  	if (bandwidth.secondRight > maxRight) maxRight = bandwidth.secondRight;
+		  	}
 		  };
 		};
 
